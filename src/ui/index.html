@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UB-WaveX</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="../public/wavexBlack.png" class="logo-img theme-icon" data-icon="wavex" alt="UB-WaveX">
+            </div>
+
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-view="search">
+                    <img src="../public/searchBlack.png" class="icon theme-icon" data-icon="search" alt="Search">
+                    <span>Search</span>
+                </a>
+                <a href="#" class="nav-item" data-view="downloads">
+                    <img src="../public/downloadWhite.png" class="icon theme-icon" data-icon="download" alt="Downloads">
+                    <span>Downloads</span>
+                    <button class="nav-menu-btn" data-view="downloads" title="Downloads options">
+                        <img src="../public/3dotWhite.png" alt="Menu">
+                    </button>
+                </a>
+                <a href="#" class="nav-item" data-view="liked">
+                    <img src="../public/liked.png" class="icon liked-icon" alt="Liked Songs">
+                    <span>Liked Songs</span>
+                    <button class="nav-menu-btn" data-view="liked" title="Liked Songs options">
+                        <img src="../public/3dotWhite.png" alt="Menu">
+                    </button>
+                </a>
+            </nav>
+
+            <div class="nav-divider"></div>
+
+            <div class="playlists-section">
+                <div class="section-header">
+                    <h3>Playlists</h3>
+                    <button class="btn-icon" id="btn-new-playlist" title="Create Playlist">
+                        <img src="../public/addWhite.png" class="theme-icon" data-icon="add" alt="Add Playlist">
+                    </button>
+                </div>
+                <div id="playlist-list" class="playlist-list">
+                    <!-- Playlists will be loaded here -->
+                </div>
+            </div>
+
+            <div class="nav-divider"></div>
+
+            <div class="sidebar-footer">
+                <a href="#" class="nav-item" data-view="settings">
+                    <img src="../public/settingsWhite.png" class="icon theme-icon" data-icon="settings" alt="Settings">
+                    <span>Settings</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="content-body">
+                <!-- Search View -->
+                <div id="view-search" class="view active">
+                    <div class="view-header">
+                        <div class="view-header-content">
+                            <div class="search-bar">
+                                <div class="search-input-wrapper">
+                                    <input type="text" id="search-input"
+                                        placeholder="Search for songs, artists, albums..." />
+                                    <button id="btn-clear-search" class="clear-search-btn" style="display: none;"
+                                        title="Clear search">×</button>
+                                </div>
+                                <button id="btn-search" class="btn-primary">Search</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="search-results" class="track-list">
+                    </div>
+                    <div id="search-history" class="search-history">
+                        <h3>Recent Searches</h3>
+                        <div id="search-history-list" class="search-history-list"></div>
+                    </div>
+                    <div id="recent-plays" class="recent-plays">
+                        <h3>Recent Plays</h3>
+                        <div id="recent-plays-list" class="recent-plays-list"></div>
+                    </div>
+                </div>
+
+                <!-- Downloads View -->
+                <div id="view-downloads" class="view">
+                    <div class="view-header">
+                        <div class="view-header-content">
+                            <div class="search-input-wrapper">
+                                <input type="text" id="downloads-search-input" placeholder="Search in downloads..." />
+                            </div>
+                            <div class="title-with-actions">
+                                <h2>Downloads</h2>
+                                <div class="title-actions">
+                                    <button class="btn-action" id="btn-play-all-downloads">
+                                        <img src="../public/playBlack.png" class="theme-icon" data-icon="play"
+                                            alt="Play">
+                                        Play All
+                                    </button>
+                                    <button class="btn-action" id="btn-shuffle-downloads">
+                                        <img src="../public/shuffleBlack.png" class="theme-icon" data-icon="shuffle"
+                                            alt="Shuffle">
+                                        Shuffle
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="downloads-list" class="track-list">
+                        <div class="empty-state">
+                            <p>No downloads yet</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Liked Songs View -->
+                <div id="view-liked" class="view">
+                    <div class="view-header">
+                        <div class="view-header-content">
+                            <div class="search-input-wrapper">
+                                <input type="text" id="liked-search-input" placeholder="Search in liked songs..." />
+                            </div>
+                            <div class="title-with-actions">
+                                <h2>Liked Songs</h2>
+                                <div class="title-actions">
+                                    <button class="btn-action" id="btn-play-all-liked">
+                                        <img src="../public/playBlack.png" class="theme-icon" data-icon="play"
+                                            alt="Play">
+                                        Play All
+                                    </button>
+                                    <button class="btn-action" id="btn-shuffle-liked">
+                                        <img src="../public/shuffleBlack.png" class="theme-icon" data-icon="shuffle"
+                                            alt="Shuffle">
+                                        Shuffle
+                                    </button>
+                                    <button class="btn-action" id="btn-download-all-liked">
+                                        <img src="../public/downloadBlack.png" class="theme-icon" data-icon="download"
+                                            alt="Download">
+                                        Download All
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="liked-list" class="track-list">
+                        <div class="empty-state">
+                            <p>No liked songs yet</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings View -->
+                <div id="view-settings" class="view">
+                    <div class="view-header">
+                        <div class="view-header-content">
+                            <div class="search-input-wrapper">
+                                <input type="text" id="settings-search-input" placeholder="Search settings..." />
+                            </div>
+                            <div class="title-with-actions">
+                                <h2>Settings</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-container">
+                        <div class="settings-section">
+                            <h3>Appearance</h3>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Theme</label>
+                                    <p class="setting-description">Choose between light and dark theme</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="theme-toggle">
+                                        <button class="theme-btn" data-theme="dark">
+                                            <span>Dark</span>
+                                        </button>
+                                        <button class="theme-btn active" data-theme="light">
+                                            <span>Light</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>Playback</h3>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Auto-play on Startup</label>
+                                    <p class="setting-description">Resume playback of last track when app starts</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch" id="toggle-autoplay" data-setting="autoplay"></div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Default Volume</label>
+                                    <p class="setting-description">Set the default volume level (0-100%)</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="slider-control">
+                                        <input type="range" id="volume-slider" class="slider-input" min="0" max="100"
+                                            value="70">
+                                        <span id="volume-value" class="slider-value">70%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Crossfade Duration</label>
+                                    <p class="setting-description">Smooth transition between tracks (0-10 seconds, 0 =
+                                        disabled)</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="slider-control">
+                                        <input type="range" id="crossfade-slider" class="slider-input" min="0" max="10"
+                                            value="0" step="0.5">
+                                        <span id="crossfade-value" class="slider-value">0s</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Gapless Playback</label>
+                                    <p class="setting-description">Play tracks without pauses between them</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch" id="toggle-gapless" data-setting="gapless"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>Mini Player</h3>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Enable Mini Player</label>
+                                    <p class="setting-description">Show mini player button in player controls</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch active" id="toggle-mini-player"
+                                        data-setting="miniPlayerEnabled"></div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Default Position</label>
+                                    <p class="setting-description">Choose where mini player appears on screen</p>
+                                </div>
+                                <div class="setting-control">
+                                    <select id="mini-player-position" class="select-input">
+                                        <option value="top-left">Top Left</option>
+                                        <option value="top-right" selected>Top Right</option>
+                                        <option value="middle">Center</option>
+                                        <option value="bottom-left">Bottom Left</option>
+                                        <option value="bottom-right">Bottom Right</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Always on Top</label>
+                                    <p class="setting-description">Keep mini player above all other windows</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch active" id="toggle-mini-player-ontop"
+                                        data-setting="miniPlayerAlwaysOnTop"></div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Window Opacity</label>
+                                    <p class="setting-description">Adjust mini player transparency (50-100%)</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="slider-control">
+                                        <input type="range" id="mini-player-opacity-slider" class="slider-input"
+                                            min="50" max="100" value="100">
+                                        <span id="mini-player-opacity-value" class="slider-value">100%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>Download</h3>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Download Directory</label>
+                                    <p class="setting-description">Choose where to save downloaded music files</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="directory-setting">
+                                        <input type="text" id="download-directory-input" class="directory-input"
+                                            placeholder="Enter download directory path..." />
+                                        <button id="btn-browse-download-dir" class="btn-browse">Browse</button>
+                                        <button id="btn-reset-download-dir" class="btn-reset"
+                                            title="Reset to default">Reset</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Audio Quality</label>
+                                    <p class="setting-description">Choose download quality (higher quality = larger file
+                                        size)</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="quality-toggle">
+                                        <button class="quality-btn" data-quality="128">128 kbps</button>
+                                        <button class="quality-btn" data-quality="192">192 kbps</button>
+                                        <button class="quality-btn" data-quality="256">256 kbps</button>
+                                        <button class="quality-btn active" data-quality="320">320 kbps</button>
+                                        <button class="quality-btn" data-quality="flac">FLAC (Lossless)</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Auto-download Liked Songs</label>
+                                    <p class="setting-description">Automatically download songs when you like them</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch" id="toggle-auto-download" data-setting="autoDownload">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Concurrent Downloads</label>
+                                    <p class="setting-description">Maximum number of simultaneous downloads (1-5)</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="slider-control">
+                                        <input type="range" id="concurrent-downloads-slider" class="slider-input"
+                                            min="1" max="5" value="3" step="1">
+                                        <span id="concurrent-downloads-value" class="slider-value">3</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Embed Metadata</label>
+                                    <p class="setting-description">Add album art and lyrics to downloaded files</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch" id="toggle-embed-metadata" data-setting="embedMetadata">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>Storage</h3>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Database Directory</label>
+                                    <p class="setting-description">Choose where to store app data and database</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="directory-setting">
+                                        <input type="text" id="database-directory-input" class="directory-input"
+                                            placeholder="Enter database directory path (requires app restart)..." />
+                                        <button id="btn-browse-database-dir" class="btn-browse">Browse</button>
+                                        <button id="btn-reset-database-dir" class="btn-reset"
+                                            title="Reset to default">Reset</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>Streaming</h3>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Streaming Quality</label>
+                                    <p class="setting-description">Choose playback quality for streaming (higher quality
+                                        = more bandwidth)</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="stream-quality-toggle">
+                                        <button class="stream-quality-btn" data-stream-quality="low">Low (Save
+                                            Data)</button>
+                                        <button class="stream-quality-btn" data-stream-quality="medium">Medium</button>
+                                        <button class="stream-quality-btn active"
+                                            data-stream-quality="high">High</button>
+                                        <button class="stream-quality-btn" data-stream-quality="best">Best
+                                            Available</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>Performance</h3>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Cache Size Limit</label>
+                                    <p class="setting-description">Maximum cache size for stream URLs (50-500 MB)</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="slider-control">
+                                        <input type="range" id="cache-size-slider" class="slider-input" min="50"
+                                            max="500" value="200" step="50">
+                                        <span id="cache-size-value" class="slider-value">200 MB</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Stream Buffer Size</label>
+                                    <p class="setting-description">Audio buffer size in seconds (5-30s)</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="slider-control">
+                                        <input type="range" id="buffer-size-slider" class="slider-input" min="5"
+                                            max="30" value="10" step="5">
+                                        <span id="buffer-size-value" class="slider-value">10s</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Network Timeout</label>
+                                    <p class="setting-description">Request timeout in seconds (10-60s)</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="slider-control">
+                                        <input type="range" id="network-timeout-slider" class="slider-input" min="10"
+                                            max="60" value="30" step="5">
+                                        <span id="network-timeout-value" class="slider-value">30s</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Maximum Search Results</label>
+                                    <p class="setting-description">Number of search results to display (10-50)</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="slider-control">
+                                        <input type="range" id="max-results-slider" class="slider-input" min="10"
+                                            max="50" value="20" step="5">
+                                        <span id="max-results-value" class="slider-value">20</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>Privacy & Data</h3>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Clear Cache</label>
+                                    <p class="setting-description">Clear stream URLs and metadata cache</p>
+                                </div>
+                                <div class="setting-control">
+                                    <button id="btn-clear-cache" class="btn-action">Clear Cache</button>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Clear Search History</label>
+                                    <p class="setting-description">Remove all saved search history</p>
+                                </div>
+                                <div class="setting-control">
+                                    <button id="btn-clear-search-history" class="btn-action">Clear History</button>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Clear Recent Plays</label>
+                                    <p class="setting-description">Remove all playback history</p>
+                                </div>
+                                <div class="setting-control">
+                                    <button id="btn-clear-recent-plays" class="btn-action">Clear Recent Plays</button>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Auto-clear History</label>
+                                    <p class="setting-description">Automatically clear history after X days (0 =
+                                        disabled)</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="slider-control">
+                                        <input type="range" id="auto-clear-slider" class="slider-input" min="0" max="90"
+                                            value="0" step="7">
+                                        <span id="auto-clear-value" class="slider-value">Disabled</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>Notifications</h3>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Download Completion</label>
+                                    <p class="setting-description">Show notification when downloads complete</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch active" id="toggle-download-notification"
+                                        data-setting="downloadNotification"></div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Download Errors</label>
+                                    <p class="setting-description">Show notification when downloads fail</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch active" id="toggle-download-error-notification"
+                                        data-setting="downloadErrorNotification"></div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Now Playing</label>
+                                    <p class="setting-description">Show notification when a new track starts playing</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch" id="toggle-now-playing-notification"
+                                        data-setting="nowPlayingNotification"></div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Playback Errors</label>
+                                    <p class="setting-description">Show notification when playback fails</p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch active" id="toggle-playback-error-notification"
+                                        data-setting="playbackErrorNotification"></div>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <label>Library Updates</label>
+                                    <p class="setting-description">Show notification when tracks are added to library
+                                    </p>
+                                </div>
+                                <div class="setting-control">
+                                    <div class="toggle-switch" id="toggle-library-notification"
+                                        data-setting="libraryNotification"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>About</h3>
+                            <div class="about-content">
+                                <img src="../public/wavexBlack.png" alt="WaveX Logo" class="about-logo" id="about-logo">
+                                <div class="about-info">
+                                    <p class="version">Version 1.0.0</p>
+                                    <p class="description">A powerful music streaming and download desktop application
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Playlist View -->
+                <div id="view-playlist" class="view">
+                    <div class="view-header">
+                        <div class="view-header-content">
+                            <div class="search-input-wrapper">
+                                <input type="text" id="playlist-search-input" placeholder="Search in playlist..." />
+                            </div>
+                            <div class="title-with-actions">
+                                <h2 id="playlist-title">Playlist</h2>
+                                <div class="title-actions">
+                                    <button class="btn-action" id="btn-play-all-playlist">
+                                        <img src="../public/playBlack.png" class="theme-icon" data-icon="play"
+                                            alt="Play">
+                                        Play All
+                                    </button>
+                                    <button class="btn-action" id="btn-shuffle-playlist">
+                                        <img src="../public/shuffleBlack.png" class="theme-icon" data-icon="shuffle"
+                                            alt="Shuffle">
+                                        Shuffle
+                                    </button>
+                                    <button class="btn-action" id="btn-download-playlist">
+                                        <img src="../public/downloadBlack.png" class="theme-icon" data-icon="download"
+                                            alt="Download">
+                                        Download All
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="playlist-tracks" class="track-list">
+                        <div class="empty-state">
+                            <p>No tracks in this playlist</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Player Bar -->
+    <div class="player-bar">
+        <input type="range" id="seek-bar" class="seek-bar" min="0" max="100" value="0" />
+        <div class="player-time-container">
+            <span id="current-time" class="time-display">0:00</span>
+            <span id="total-time" class="time-display">0:00</span>
+        </div>
+        <div class="player-content">
+            <div class="player-track-info">
+                <div class="player-details">
+                    <div class="player-title-wrapper">
+                        <div id="player-title" class="player-title">No track playing</div>
+                    </div>
+                    <div class="player-artist-wrapper">
+                        <span id="player-artist" class="player-artist">Unknown Artist</span>
+                        <span id="playback-source" class="playback-source"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="player-center">
+                <div class="player-controls">
+                    <button id="btn-previous" class="btn-player" title="Previous">
+                        <img src="../public/previousBlack.png" class="theme-icon" data-icon="previous" alt="Previous">
+                    </button>
+                    <button id="btn-backward-10" class="btn-player btn-skip" title="Backward 5s">
+                        <img src="../public/back5Black.png" class="theme-icon" data-icon="back5" alt="Back 5s">
+                    </button>
+                    <button id="btn-play-pause" class="btn-player btn-play-pause" title="Play">
+                        <img src="../public/playBlack.png" class="theme-icon play-pause-icon" data-icon="play"
+                            alt="Play">
+                    </button>
+                    <button id="btn-forward-10" class="btn-player btn-skip" title="Forward 5s">
+                        <img src="../public/skip5Black.png" class="theme-icon" data-icon="skip5" alt="Skip 5s">
+                    </button>
+                    <button id="btn-next" class="btn-player" title="Next">
+                        <img src="../public/nextBlack.png" class="theme-icon" data-icon="next" alt="Next">
+                    </button>
+                </div>
+            </div>
+
+            <div class="player-volume">
+                <button id="btn-mini-player" class="btn-player btn-mini-player" title="Open Mini Player">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                        <path
+                            d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 1.98 2 1.98h18c1.1 0 2-.88 2-1.98V5c0-1.1-.9-2-2-2zm0 16.01H3V4.98h18v14.03z" />
+                    </svg>
+                </button>
+                <button id="btn-volume" class="btn-player" title="Mute/Unmute">
+                    <img src="../public/vol3Black.png" class="theme-icon volume-icon" data-icon="vol3" alt="Volume">
+                </button>
+                <input type="range" id="volume-bar" class="volume-bar" min="0" max="100" value="100" />
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="spinner"></div>
+            <p id="loading-message">Initializing...</p>
+        </div>
+
+        <!-- Context Menu -->
+        <div id="context-menu" class="context-menu">
+            <div class="context-menu-item" data-action="play">Play</div>
+            <div class="context-menu-item" data-action="play-next">Play Next</div>
+            <div class="context-menu-item" data-action="add-to-queue">Add to Queue</div>
+            <div class="context-menu-divider"></div>
+            <div class="context-menu-item" data-action="download">Download</div>
+            <div class="context-menu-item" data-action="like">Like</div>
+            <div class="context-menu-divider"></div>
+            <div class="context-menu-item" data-action="add-to-playlist">Add to Playlist</div>
+        </div>
+
+        <!-- Downloads View Context Menu -->
+        <div id="downloads-view-menu" class="context-menu">
+            <div class="context-menu-item" data-action="play-all">Play All</div>
+            <div class="context-menu-item" data-action="shuffle">Shuffle</div>
+            <div class="context-menu-divider"></div>
+            <div class="context-menu-item" data-action="remove-all">Remove All Downloads</div>
+        </div>
+
+        <!-- Liked View Context Menu -->
+        <div id="liked-view-menu" class="context-menu">
+            <div class="context-menu-item" data-action="play-all">Play All</div>
+            <div class="context-menu-item" data-action="shuffle">Shuffle</div>
+            <div class="context-menu-divider"></div>
+            <div class="context-menu-item" data-action="download-all">Download All</div>
+            <div class="context-menu-item" data-action="unlike-all">Unlike All</div>
+        </div>
+
+        <!-- Custom Modal Dialogs -->
+        <div id="modal-overlay" class="modal-overlay">
+            <div class="modal-dialog">
+                <div class="modal-header">
+                    <h3 id="modal-title" class="modal-title"></h3>
+                </div>
+                <div class="modal-body">
+                    <p id="modal-message" class="modal-message"></p>
+                </div>
+                <div class="modal-footer">
+                    <button id="modal-cancel" class="btn-modal btn-cancel">Cancel</button>
+                    <button id="modal-confirm" class="btn-modal btn-confirm">OK</button>
+                </div>
+            </div>
+        </div>
+
+        <audio id="audio-player" preload="auto"></audio>
+
+        <script src="renderer.js"></script>
+        <script src="player.js"></script>
+</body>
+
+</html>

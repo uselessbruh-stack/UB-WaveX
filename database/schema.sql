@@ -156,10 +156,10 @@ CREATE TABLE IF NOT EXISTS download_queue (
 CREATE INDEX IF NOT EXISTS idx_download_queue_status ON download_queue(status);
 CREATE INDEX IF NOT EXISTS idx_download_queue_added ON download_queue(added_at);
 
--- Insert default settings
+-- Insert default settings (paths are populated at runtime by the app)
 INSERT OR IGNORE INTO settings (setting_key, setting_value) VALUES
-    ('download_path', 'C:\Users\ASUS\Music\UB-WaveX'),
-    ('cache_path', 'C:\Users\ASUS\AppData\Local\UB-WaveX\cache'),
+    ('download_path', ''),
+    ('cache_path', ''),
     ('audio_quality', 'best'),
     ('max_preload_tracks', '5'),
     ('enable_cache', 'true');

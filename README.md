@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![UB-WaveX Logo](mainpage/wavexwhite.png)
+![UB-WaveX Logo](wavexwhite.png)
 
 **Music Reimagined**
 

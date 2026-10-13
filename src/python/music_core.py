@@ -6,6 +6,7 @@ Music extraction, metadata resolution, and download manager
 import sys
 import json
 import os
+import io
 import shutil
 from typing import Dict, Any, Optional
 import yt_dlp
@@ -15,6 +16,11 @@ from datetime import datetime, timedelta
 import hashlib
 from pathlib import Path
 import threading
+
+# Force line-buffered stdout so Electron receives complete JSON lines
+# immediately, even when running as a compiled .exe (PyInstaller)
+if hasattr(sys.stdout, 'buffer'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, line_buffering=True)
 
 class MusicCore:
     """Main class handling all music operations"""
@@ -37,6 +43,7 @@ class MusicCore:
             'embedMetadata': True
         }
         self.active_downloads = 0
+        self.active_downloads_lock = threading.Lock()  # Thread-safe counter
         
         # Set FFmpeg path (bundled with app)
         self.ffmpeg_path = self._get_ffmpeg_path()
@@ -170,13 +177,13 @@ class MusicCore:
         """Download a track with metadata from YouTube"""
         try:
             # Check concurrent download limit
-            if self.active_downloads >= self.download_settings['concurrentDownloads']:
-                return {
-                    'success': False,
-                    'error': 'Concurrent download limit reached. Please wait for active downloads to complete.'
-                }
-            
-            self.active_downloads += 1
+            with self.active_downloads_lock:
+                if self.active_downloads >= self.download_settings['concurrentDownloads']:
+                    return {
+                        'success': False,
+                        'error': 'Concurrent download limit reached. Please wait for active downloads to complete.'
+                    }
+                self.active_downloads += 1
             
             try:
                 # Get quality setting (default to 320 if not provided)
@@ -253,11 +260,13 @@ class MusicCore:
                         'artist': artist
                     }
             finally:
-                self.active_downloads -= 1
+                with self.active_downloads_lock:
+                    self.active_downloads -= 1
                 
         except Exception as e:
             self.log_error(f"Download failed: {str(e)}")
-            self.active_downloads = max(0, self.active_downloads - 1)
+            with self.active_downloads_lock:
+                self.active_downloads = max(0, self.active_downloads - 1)
             raise
             
     def resolve_metadata(self, track_info: Dict[str, Any]) -> Dict[str, Any]:
@@ -519,14 +528,13 @@ class MusicCore:
         try:
             cursor = self.db_connection.cursor()
             
-            expires_at = None
             if hours or days:
                 total_hours = hours + (days * 24)
-                expires_at = f"datetime('now', '+{total_hours} hours')"
-                cursor.execute(f"""
+                # Use parameterized query with SQLite datetime function
+                cursor.execute("""
                     INSERT OR REPLACE INTO cache (cache_key, cache_type, cache_data, expires_at)
-                    VALUES (?, ?, ?, {expires_at})
-                """, (cache_key, cache_type, data))
+                    VALUES (?, ?, ?, datetime('now', '+' || ? || ' hours'))
+                """, (cache_key, cache_type, data, str(total_hours)))
             else:
                 cursor.execute("""
                     INSERT OR REPLACE INTO cache (cache_key, cache_type, cache_data, expires_at)
@@ -589,28 +597,6 @@ class IPCHandler:
             elif action == 'resolve_metadata':
                 result = self.music_core.resolve_metadata(params)
                 return self.success_response(request_id, result)
-            
-            elif action == 'update_directories':
-                # Update directories from settings
-                download_dir = params.get('download_directory')
-                database_dir = params.get('database_directory')
-                
-                if download_dir:
-                    self.music_core.download_dir = Path(download_dir)
-                    self.music_core.download_dir.mkdir(parents=True, exist_ok=True)
-                
-                if database_dir:
-                    # Reconnect to database in new location
-                    new_db_path = Path(database_dir) / 'ubwavex.db'
-                    if self.music_core.db_connection:
-                        self.music_core.db_connection.close()
-                    self.music_core.db_path = new_db_path
-                    self.music_core.connect_database()
-                
-                return self.success_response(request_id, {
-                    'download_dir': str(self.music_core.download_dir),
-                    'db_path': str(self.music_core.db_path)
-                })
             
             elif action == 'update_download_settings':
                 # Update download settings from renderer

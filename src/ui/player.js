@@ -127,10 +127,10 @@ class AudioPlayer {
             const time = (e.target.value / 100) * this.audio.duration;
             this.audio.currentTime = time;
 
-            // Update visual immediately - only show black if progress > 0
+            // Update visual immediately - only show progress color if progress > 0
             const progress = e.target.value;
             if (progress > 0) {
-                this.seekBar.style.background = `linear-gradient(to right, #000 0%, #000 ${progress}%, var(--bg-tertiary) ${progress}%, var(--bg-tertiary) 100%)`;
+                this.seekBar.style.background = `linear-gradient(to right, var(--text-primary) 0%, var(--text-primary) ${progress}%, var(--bg-tertiary) ${progress}%, var(--bg-tertiary) 100%)`;
             } else {
                 this.seekBar.style.background = 'var(--bg-tertiary)';
             }
@@ -163,12 +163,12 @@ class AudioPlayer {
             if (this.miniPlayerOpen) {
                 this.sendMiniPlayerUpdate();
             }
-            // Save state periodically (every 2 seconds)
+            // Save state periodically (every 5 seconds to reduce writes)
             if (!this.saveStateTimeout) {
                 this.saveStateTimeout = setTimeout(() => {
                     this.savePlaybackState();
                     this.saveStateTimeout = null;
-                }, 2000);
+                }, 5000);
             }
         });
         this.audio.addEventListener('ended', () => this.onTrackEnded());
@@ -869,9 +869,9 @@ class AudioPlayer {
             const progress = (this.audio.currentTime / this.audio.duration) * 100;
             this.seekBar.value = progress;
 
-            // Update visual progress - only show black if progress > 0
+            // Update visual progress - only show color if progress > 0
             if (progress > 0) {
-                this.seekBar.style.background = `linear-gradient(to right, #000 0%, #000 ${progress}%, var(--bg-tertiary) ${progress}%, var(--bg-tertiary) 100%)`;
+                this.seekBar.style.background = `linear-gradient(to right, var(--text-primary) 0%, var(--text-primary) ${progress}%, var(--bg-tertiary) ${progress}%, var(--bg-tertiary) 100%)`;
             } else {
                 this.seekBar.style.background = 'var(--bg-tertiary)';
             }

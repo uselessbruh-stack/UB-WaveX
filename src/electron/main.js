@@ -1,8 +1,10 @@
+console.error('=== ELECTRON APP STARTING ===');
 const { app, BrowserWindow, ipcMain, nativeTheme, dialog } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 const initSqlJs = require('sql.js');
 const fs = require('fs');
+console.error('=== MODULES LOADED ===');
 
 let mainWindow;
 let miniPlayerWindow = null;
@@ -37,37 +39,48 @@ function updateAppIcon() {
 
 // Create main window
 function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 1600,
-    height: 900,
-    minWidth: 900,
-    minHeight: 600,
-    frame: true,
-    backgroundColor: '#1a1a1a',
-    icon: getAppIcon(),
-    autoHideMenuBar: true,
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-      enableRemoteModule: true
-    },
-    show: false
-  });
+  try {
+    console.error('=== Creating BrowserWindow ===');
+    mainWindow = new BrowserWindow({
+      width: 1600,
+      height: 900,
+      minWidth: 900,
+      minHeight: 600,
+      frame: true,
+      backgroundColor: '#1a1a1a',
+      icon: getAppIcon(),
+      autoHideMenuBar: true,
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false,
+        enableRemoteModule: true
+      },
+      show: false
+    });
+    console.error('=== BrowserWindow created ===');
 
-  // Load UI immediately for fast startup
-  mainWindow.loadFile(path.join(__dirname, '../ui/index.html'));
+    // Load UI immediately for fast startup
+    const filePath = path.join(__dirname, '../ui/index.html');
+    console.error('Loading file:', filePath);
+    console.error('File exists:', require('fs').existsSync(filePath));
+    mainWindow.loadFile(filePath);
+    console.error('=== File loaded ===');
 
-  // Show window when ready
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
+    // Show window when ready
+    mainWindow.once('ready-to-show', () => {
+      mainWindow.show();
 
-    // Initialize heavy dependencies after UI is visible
-    initializeBackend();
-  });
+      // Initialize heavy dependencies after UI is visible
+      initializeBackend();
+    });
 
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
+    mainWindow.on('closed', () => {
+      mainWindow = null;
+    });
+  } catch (error) {
+    console.error('=== ERROR IN CREATE WINDOW ===', error);
+    throw error;
+  }
 
   // Listen for system theme changes
   nativeTheme.on('updated', () => {
@@ -173,6 +186,9 @@ async function reloadDatabase() {
 }
 
 // Start Python core executable
+let pythonRestartCount = 0;
+const MAX_PYTHON_RESTARTS = 3;
+
 function startPythonCore() {
   let pythonCmd, pythonArgs;
 
@@ -186,8 +202,12 @@ function startPythonCore() {
     pythonArgs = [path.join(__dirname, '../python/music_core.py')];
   }
 
+  // Force unbuffered stdout from Python (critical for compiled exe in production)
+  const spawnEnv = { ...process.env, PYTHONUNBUFFERED: '1' };
+
   pythonProcess = spawn(pythonCmd, pythonArgs, {
-    stdio: ['pipe', 'pipe', 'pipe']
+    stdio: ['pipe', 'pipe', 'pipe'],
+    env: spawnEnv
   });
 
   pythonProcess.stdout.on('data', (data) => {
@@ -200,6 +220,33 @@ function startPythonCore() {
 
   pythonProcess.on('close', (code) => {
     console.log(`Python process exited with code ${code}`);
+    // Auto-restart Python process if it crashed unexpectedly (with limit)
+    if (code !== 0 && code !== null && mainWindow && !mainWindow.isDestroyed()) {
+      pythonRestartCount++;
+      if (pythonRestartCount <= MAX_PYTHON_RESTARTS) {
+        console.error(`Python process crashed with code ${code}, restarting (attempt ${pythonRestartCount}/${MAX_PYTHON_RESTARTS})...`);
+        setTimeout(() => {
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            startPythonCore();
+          }
+        }, 2000);
+      } else {
+        console.error(`Python process crashed ${MAX_PYTHON_RESTARTS} times, giving up.`);
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('backend-error', 'Python backend failed to start after multiple attempts. Please restart the app.');
+        }
+      }
+    } else {
+      // Successful exit or app closing — reset counter
+      pythonRestartCount = 0;
+    }
+  });
+
+  pythonProcess.on('error', (error) => {
+    console.error('Failed to start Python process:', error);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('backend-error', `Python process failed to start: ${error.message}`);
+    }
   });
 
   console.log('Python core started successfully');
@@ -221,13 +268,25 @@ function startPythonCore() {
 // Handle responses from Python core
 const pendingRequests = new Map();
 let requestIdCounter = 0;
+// Buffer for accumulating partial stdout data from Python process.
+// Node.js stream 'data' events may deliver partial lines, especially
+// in production when the compiled Python exe buffers differently.
+let pythonOutputBuffer = '';
 
 function handlePythonResponse(data) {
-  try {
-    const responses = data.toString().split('\n').filter(line => line.trim());
+  pythonOutputBuffer += data.toString();
+  const lines = pythonOutputBuffer.split('\n');
 
-    responses.forEach(responseStr => {
-      const response = JSON.parse(responseStr);
+  // Keep the last element — it's either empty (line ended with \n)
+  // or a partial line that hasn't been fully received yet
+  pythonOutputBuffer = lines.pop();
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    try {
+      const response = JSON.parse(trimmed);
 
       if (response.request_id && pendingRequests.has(response.request_id)) {
         const { resolve, reject } = pendingRequests.get(response.request_id);
@@ -240,15 +299,21 @@ function handlePythonResponse(data) {
 
         pendingRequests.delete(response.request_id);
       }
-    });
-  } catch (error) {
-    console.error('Error parsing Python response:', error);
+    } catch (parseError) {
+      console.error('Failed to parse Python response line:', trimmed.substring(0, 200), parseError.message);
+    }
   }
 }
 
 // Send request to Python core
 function sendPythonRequest(action, params = {}) {
   return new Promise((resolve, reject) => {
+    // Guard: ensure Python process is alive
+    if (!pythonProcess || pythonProcess.killed || !pythonProcess.stdin || pythonProcess.stdin.destroyed) {
+      reject(new Error('Python process is not running'));
+      return;
+    }
+
     const requestId = ++requestIdCounter;
 
     const request = {
@@ -442,9 +507,9 @@ async function addToDownloadQueue(trackData) {
     // Check if already in queue or downloaded
     const existsInQueue = db.exec(`
       SELECT id FROM download_queue 
-      WHERE youtube_id = '${trackData.video_id}' 
+      WHERE youtube_id = ? 
       AND status IN ('pending', 'downloading')
-    `);
+    `, [trackData.video_id]);
 
     if (existsInQueue.length > 0 && existsInQueue[0].values.length > 0) {
       console.log('Track already in download queue:', trackData.title);
@@ -455,8 +520,8 @@ async function addToDownloadQueue(trackData) {
     const trackExists = db.exec(`
       SELECT t.id FROM tracks t
       INNER JOIN downloads d ON t.id = d.track_id
-      WHERE t.youtube_id = '${trackData.video_id}'
-    `);
+      WHERE t.youtube_id = ?
+    `, [trackData.video_id]);
 
     if (trackExists.length > 0 && trackExists[0].values.length > 0) {
       console.log('Track already downloaded:', trackData.title);
@@ -550,8 +615,8 @@ async function processDownloadQueue() {
       db.run(`
         UPDATE download_queue 
         SET status = 'downloading', started_at = CURRENT_TIMESTAMP 
-        WHERE id = ${queueItem.id}
-      `);
+        WHERE id = ?
+      `, [queueItem.id]);
       saveDatabase();
 
       // Notify renderer
@@ -577,8 +642,8 @@ async function processDownloadQueue() {
       db.run(`
         UPDATE download_queue 
         SET status = 'completed', completed_at = CURRENT_TIMESTAMP 
-        WHERE id = ${queueItem.id}
-      `);
+        WHERE id = ?
+      `, [queueItem.id]);
       saveDatabase();
 
       // Remove from queue
@@ -608,9 +673,9 @@ async function processDownloadQueue() {
         // Retry up to 3 times
         db.run(`
           UPDATE download_queue 
-          SET status = 'pending', retry_count = ${retryCount}, error_message = ? 
-          WHERE id = ${queueItem.id}
-        `, [error.message]);
+          SET status = 'pending', retry_count = ?, error_message = ? 
+          WHERE id = ?
+        `, [retryCount, error.message, queueItem.id]);
         saveDatabase();
 
         // Move to end of queue for retry
@@ -623,8 +688,8 @@ async function processDownloadQueue() {
         db.run(`
           UPDATE download_queue 
           SET status = 'failed', error_message = ? 
-          WHERE id = ${queueItem.id}
-        `, [error.message]);
+          WHERE id = ?
+        `, [error.message, queueItem.id]);
         saveDatabase();
 
         // Remove from queue
@@ -911,6 +976,7 @@ ipcMain.handle('db-record-playback', async (event, { trackId, playDuration, comp
       'INSERT INTO playback_history (track_id, play_duration, completed) VALUES (?, ?, ?)',
       [trackId, playDuration || 0, completed ? 1 : 0]
     );
+    saveDatabase();
     return { success: true };
   } catch (error) {
     console.error('Failed to record playback:', error);
@@ -1445,7 +1511,13 @@ ipcMain.on('theme-changed', (event, theme) => {
 });
 
 // App lifecycle
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  console.error('=== app.whenReady() called ===');
+  createWindow();
+}).catch(err => {
+  console.error('=== ERROR IN APP READY ===', err);
+  process.exit(1);
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -1471,4 +1543,13 @@ app.on('quit', () => {
     saveDatabase();
     db.close();
   }
+});
+// Global error handlers
+process.on('uncaughtException', (error) => {
+  console.error('=== UNCAUGHT EXCEPTION ===', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('=== UNHANDLED REJECTION ===', reason);
 });
